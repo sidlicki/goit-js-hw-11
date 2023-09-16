@@ -1,5 +1,4 @@
-// Імпорт бібліотек
-import axios from 'axios'; // Бібліотека для роботи з HTTP-запитами
+import { getImages } from './js/api';
 import Notiflix from 'notiflix'; // Бібліотека для повідомлень користувачу
 import SimpleLightbox from 'simplelightbox'; // Бібліотека для галереї зображень
 import 'simplelightbox/dist/simple-lightbox.min.css'; // Стилі для галереї
@@ -19,35 +18,31 @@ const options = {
 const target = document.querySelector('.js-guard'); // Цільовий елемент для Intersection Observer
 const observer = new IntersectionObserver(onLoad, options); // Створення обсервера
 
-// Ключ API Pixabay та URL для запиту
-const API_KEY = '39466689-b0058dc694ac3f446d63717a4';
-const BASE_URL = 'https://pixabay.com/api/';
-
 // Сторінка для пагінації та об'єкт для галереї
 let currentPage = 1; // Поточна сторінка результатів
-let lightbox; // Об'єкт галереї
+const lightbox = new SimpleLightbox('.gallery a', {
+  captionsData: 'alt',
+  captionDelay: 250,
+}); // Ініціалізація галереї
 
 // Обробник події для форми пошуку
 function onSearch(evt) {
+  evt.preventDefault();
   gallery.innerHTML = ''; // Очистити галерею при новому пошуку
   currentPage = 1; // Скинути сторінку
-  evt.preventDefault();
   const val = inputSearch.value.trim(); // Отримати введений пошуковий запит
-  if (val !== '') {
-    getImages(val, currentPage).then(({ data: { hits, totalHits } }) => {
-      gallery.innerHTML = createMarkup(hits); // Додати зображення до галереї
-      Notiflix.Notify.info(`Hooray! We found ${totalHits} images.`);
-      observer.observe(target); // Почати спостереження
-      lightbox = new SimpleLightbox('.gallery a', {
-        captionsData: 'alt',
-        captionDelay: 250,
-      }); // Ініціалізація галереї
-    });
-  } else {
-    Notiflix.Notify.failure(
-      `"Sorry, type something in the search box. Please try again."`
-    );
-  }
+  getAndCreateMarkup(val); // виклик функції, всередині котрої буде відбуватись виклик функції запиту та відмальовки
+}
+
+//функція яка створює розмітку першої сторінки при запиті
+async function getAndCreateMarkup(val, page = 1) {
+  const {
+    data: { hits, totalHits },
+  } = await getImages(val, page);
+  gallery.innerHTML = createMarkup(hits); // Додати зображення до галереї
+  lightbox.refresh(); // оновлення галереї
+  observer.observe(target); // Почати спостереження
+  Notiflix.Notify.info(`Hooray! We found ${totalHits} images.`); // повідомлення про кількість знайдених зоображень
 }
 
 // Функція для створення HTML-розмітки зображень
@@ -90,40 +85,26 @@ function createMarkup(arr) {
     .join('');
 }
 
-// Функція для отримання зображень з API
-async function getImages(val, page) {
-  val = val.split(' ').join('+'); // Замінити пробіли на "+"
-  try {
-    return await axios.get(
-      `${BASE_URL}?key=${API_KEY}&q=${val}&page=${page}&image_type=photo&orientation=horizontal&safesearch=true&per_page=40`
-    );
-  } catch (error) {
-    Notiflix.Notify.info(
-      `"Sorry, there are no images matching your search query. Please try again."`
-    );
-  }
-}
-
 // Обробник події для Intersection Observer
-function onLoad(entries, observer) {
+async function onLoad(entries, observer) {
   const lastEntry = entries[entries.length - 1];
   if (lastEntry.isIntersecting) {
     currentPage += 1; // Збільшити номер сторінки
     const val = inputSearch.value.trim();
     if (val !== '') {
-      getImages(val, currentPage).then(({ data: { hits, totalHits } }) => {
-        gallery.innerHTML += createMarkup(hits);
-        lightbox.refresh(); // Додати зображення до галереї
+      const {
+        data: { hits, totalHits },
+      } = await getImages(val, currentPage);
+      gallery.innerHTML += createMarkup(hits); // додавання розмітки до вже існуючої
+      lightbox.refresh(); // оновлення галереї
+      if (currentPage >= parseInt(totalHits) / 40) {
+        observer.unobserve(target); // При досягненні кінця результатів припинити спостереження
+        Notiflix.Notify.info(
+          `We're sorry, but you've reached the end of search results`
+        );
 
-        if (currentPage >= parseInt(totalHits) / 40) {
-          observer.unobserve(target); // При досягненні кінця результатів припинити спостереження
-          Notiflix.Notify.info(
-            `We're sorry, but you've reached the end of search results`
-          );
-
-          console.log('кінець');
-        }
-      });
+        console.log('кінець');
+      }
     }
   }
 }
