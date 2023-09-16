@@ -38,7 +38,7 @@ function onSearch(evt) {
   evt.preventDefault();
   const val = inputSearch.value.trim(); // Отримати введений пошуковий запит
   if (val === '') {
-    Notiflix.Notify.failure('Для пошуку потрібно спочатку ввести запит');
+    Notiflix.Notify.failure('You must first enter a query to search');
     return;
   }
   gallery.innerHTML = ''; // Очистити галерею при новому пошуку
@@ -54,10 +54,10 @@ async function getAndCreateMarkup(val, page = 1) {
   } = await getImages(val, page);
   if (totalHits === 0) {
     Notiflix.Notify.failure(
-      `Нажаль за вашим запитом "${val}" не знайшлося жодного зоображення, спробуйте ще раз`
+      `Unfortunately, no image was found for your query "${val}", please try again`
     );
     gallery.innerHTML =
-      '<h2 class="start-text">Напишіть свій запит ще раз для пошуку зоображень</h2>';
+      '<h2 class="start-text">Write your query again to find images</h2>';
     return;
   }
   gallery.innerHTML = createMarkup(hits); // Додати зображення до галереї
