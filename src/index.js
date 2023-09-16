@@ -18,6 +18,13 @@ const options = {
 const target = document.querySelector('.js-guard'); // Цільовий елемент для Intersection Observer
 const observer = new IntersectionObserver(onLoad, options); // Створення обсервера
 
+Notiflix.Notify.init({
+  fontSize: '20px',
+  width: '350px',
+  position: 'right-top',
+  opacity: 0.95,
+});
+
 // Сторінка для пагінації та об'єкт для галереї
 let currentPage = 1; // Поточна сторінка результатів
 const lightbox = new SimpleLightbox('.gallery a', {
@@ -28,9 +35,14 @@ const lightbox = new SimpleLightbox('.gallery a', {
 // Обробник події для форми пошуку
 function onSearch(evt) {
   evt.preventDefault();
+  const val = inputSearch.value.trim(); // Отримати введений пошуковий запит
+  if (val === '') {
+    Notiflix.Notify.failure('Для пошуку потрібно спочатку ввести запит');
+    return;
+  }
   gallery.innerHTML = ''; // Очистити галерею при новому пошуку
   currentPage = 1; // Скинути сторінку
-  const val = inputSearch.value.trim(); // Отримати введений пошуковий запит
+
   getAndCreateMarkup(val); // виклик функції, всередині котрої буде відбуватись виклик функції запиту та відмальовки
 }
 
@@ -42,7 +54,7 @@ async function getAndCreateMarkup(val, page = 1) {
   gallery.innerHTML = createMarkup(hits); // Додати зображення до галереї
   lightbox.refresh(); // оновлення галереї
   observer.observe(target); // Почати спостереження
-  Notiflix.Notify.info(`Hooray! We found ${totalHits} images.`); // повідомлення про кількість знайдених зоображень
+  Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`); // повідомлення про кількість знайдених зоображень
 }
 
 // Функція для створення HTML-розмітки зображень
@@ -102,7 +114,6 @@ async function onLoad(entries, observer) {
         Notiflix.Notify.info(
           `We're sorry, but you've reached the end of search results`
         );
-
         console.log('кінець');
       }
     }
