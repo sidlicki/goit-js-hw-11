@@ -19,6 +19,7 @@ const target = document.querySelector('.js-guard'); // Цільовий елем
 const observer = new IntersectionObserver(onLoad, options); // Створення обсервера
 
 Notiflix.Notify.init({
+  timeout: 5000,
   fontSize: '20px',
   width: '350px',
   position: 'right-top',
@@ -51,6 +52,14 @@ async function getAndCreateMarkup(val, page = 1) {
   const {
     data: { hits, totalHits },
   } = await getImages(val, page);
+  if (totalHits === 0) {
+    Notiflix.Notify.failure(
+      `Нажаль за вашим запитом "${val}" не знайшлося жодного зоображення, спробуйте ще раз`
+    );
+    gallery.innerHTML =
+      '<h2 class="start-text">Напишіть свій запит ще раз для пошуку зоображень</h2>';
+    return;
+  }
   gallery.innerHTML = createMarkup(hits); // Додати зображення до галереї
   lightbox.refresh(); // оновлення галереї
   observer.observe(target); // Почати спостереження
