@@ -44,15 +44,18 @@ function onSearch(evt) {
   gallery.innerHTML = ''; // Очистити галерею при новому пошуку
   currentPage = 1; // Скинути сторінку
 
-  getAndCreateMarkup(val); // виклик функції, всередині котрої буде відбуватись виклик функції запиту та відмальовки
+  // Виклик функції для отримання та створення розмітки
+  getAndCreateMarkup(val);
 }
 
-//функція яка створює розмітку першої сторінки при запиті
+// Функція для отримання та створення розмітки для першої сторінки
 async function getAndCreateMarkup(val, page = 1) {
+  // Отримання даних зображень
   const {
     data: { hits, totalHits },
   } = await getImages(val, page);
   if (totalHits === 0) {
+    // Повідомлення, якщо не знайдено зображень
     Notiflix.Notify.failure(
       `Unfortunately, no image was found for your query "${val}", please try again`
     );
@@ -60,13 +63,20 @@ async function getAndCreateMarkup(val, page = 1) {
       '<h2 class="start-text">Write your query again to find images</h2>';
     return;
   }
-  gallery.innerHTML = createMarkup(hits); // Додати зображення до галереї
-  lightbox.refresh(); // оновлення галереї
-  observer.observe(target); // Почати спостереження
-  Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`); // повідомлення про кількість знайдених зоображень
+  // Додавання зображень до галереї
+  gallery.innerHTML = createMarkup(hits);
+  lightbox.refresh(); // Оновлення галереї
+
+  if (totalHits > 40) {
+    // Почати спостереження за пагінацією
+    observer.observe(target);
+    console.log('Start observing');
+  }
+  // Повідомлення про кількість знайдених зображень
+  Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
 }
 
-// Функція для створення HTML-розмітки зображень
+//Функція для створення розмітки
 function createMarkup(arr) {
   return arr
     .map(
@@ -108,23 +118,44 @@ function createMarkup(arr) {
 
 // Обробник події для Intersection Observer
 async function onLoad(entries, observer) {
+  console.log('Observing in progress');
   const lastEntry = entries[entries.length - 1];
   if (lastEntry.isIntersecting) {
-    currentPage += 1; // Збільшити номер сторінки
+    // Збільшити номер сторінки при досягненні кінця
+    currentPage += 1;
+    console.log(`Page number ${currentPage}`);
     const val = inputSearch.value.trim();
     if (val !== '') {
+      // Отримання та додавання розмітки до вже існуючої сторінки
       const {
         data: { hits, totalHits },
       } = await getImages(val, currentPage);
-      gallery.innerHTML += createMarkup(hits); // додавання розмітки до вже існуючої
-      lightbox.refresh(); // оновлення галереї
+      gallery.innerHTML += createMarkup(hits);
+
+      smoothScroll(); // Плавне прокручування
+
+      lightbox.refresh(); // Оновлення галереї
+
       if (currentPage >= parseInt(totalHits) / 40) {
-        observer.unobserve(target); // При досягненні кінця результатів припинити спостереження
+        // При досягненні кінця результатів припинити спостереження
+        observer.unobserve(target);
         Notiflix.Notify.info(
           `We're sorry, but you've reached the end of search results`
         );
-        console.log('кінець');
+        console.log('End of observation');
       }
     }
   }
+}
+
+// Плавне прокручування
+function smoothScroll() {
+  const { height: cardHeight } = document
+    .querySelector('.gallery')
+    .firstElementChild.getBoundingClientRect();
+
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: 'smooth',
+  });
 }
