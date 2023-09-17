@@ -7,7 +7,9 @@ import 'simplelightbox/dist/simple-lightbox.min.css'; // Стилі для га�
 const searchForm = document.querySelector('.search-form'); // Форма пошуку
 const inputSearch = searchForm.elements.searchQuery; // Поле введення пошукового запиту
 const gallery = document.querySelector('.gallery'); // Галерея зображень
+const btnReset = document.querySelector('.btn-reset'); // кнопка ресет
 searchForm.addEventListener('submit', onSearch); // Додавання обробника подій для форми
+searchForm.addEventListener('reset', onReset); // Додавання обробника подій для форми
 
 // Налаштування Intersection Observer для пагінації
 const options = {
@@ -27,6 +29,13 @@ Notiflix.Notify.init({
   opacity: 0.95,
 });
 
+btnReset.disabled = true;
+inputSearch.addEventListener('input', () => {
+  if (inputSearch.value !== '') {
+    btnReset.disabled = false;
+  }
+});
+
 // Сторінка для пагінації та об'єкт для галереї
 let currentPage = 1; // Поточна сторінка результатів
 const lightbox = new SimpleLightbox('.gallery a', {
@@ -40,6 +49,7 @@ function onSearch(evt) {
   const val = inputSearch.value.trim(); // Отримати введений пошуковий запит
   if (val === '') {
     Notiflix.Notify.failure('You must first enter a query to search');
+    btnReset.disabled = true;
     return;
   }
   gallery.innerHTML = ''; // Очистити галерею при новому пошуку
@@ -187,3 +197,12 @@ scrollToTopBtn.addEventListener('click', () => {
     behavior: 'smooth',
   });
 });
+
+//очищення за допомогою кнопки ресет
+function onReset() {
+  console.log('reset');
+  observer.unobserve(target);
+  gallery.innerHTML =
+    '<h2 class="start-text">Write your query again to find images</h2>';
+  btnReset.disabled = true;
+}
