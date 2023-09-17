@@ -51,6 +51,10 @@ function onSearch(evt) {
 
 // Функція для отримання та створення розмітки для першої сторінки
 async function getAndCreateMarkup(val, page = 1) {
+  //Очищення сторінки при кожному новому запиті
+  gallery.innerHTML = '';
+  observer.unobserve(target);
+
   // Отримання даних зображень
   const {
     data: { hits, totalHits },
