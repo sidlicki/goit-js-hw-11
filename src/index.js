@@ -19,6 +19,7 @@ const target = document.querySelector('.js-guard'); // Цільовий елем
 const observer = new IntersectionObserver(onLoad, options); // Створення обсервера
 
 Notiflix.Notify.init({
+  distance: '45px',
   timeout: 5000,
   fontSize: '20px',
   width: '350px',
@@ -159,3 +160,26 @@ function smoothScroll() {
     behavior: 'smooth',
   });
 }
+
+//прокрутка вгору (взято з GPT)
+const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+
+window.addEventListener('scroll', () => {
+  // Показати/приховати кнопку в залежності від позиції прокрутки
+  if (
+    document.body.scrollTop > 2000 ||
+    document.documentElement.scrollTop > 2000
+  ) {
+    scrollToTopBtn.style.display = 'block';
+  } else {
+    scrollToTopBtn.style.display = 'none';
+  }
+});
+
+scrollToTopBtn.addEventListener('click', () => {
+  // Плавна прокрутка сторінки вгору
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  });
+});
